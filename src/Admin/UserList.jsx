@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 
+
 export default function ListUser() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   
+
+    // 1. FETCH POSTS DEPENDING ON ACTIVE TAB
+
   // 👈 New state to track the active status filter tab ('ALL', 'ACTIVE', 'FLAGGED', 'BANNED')
   const [statusFilter, setStatusFilter] = useState('ALL');
 
@@ -76,7 +80,8 @@ export default function ListUser() {
   });
 
   return (
-    <div className="min-h-screen md:w-[60%] bg-slate-500 text-slate-100 p-6 sm:p-12 space-y-8">
+    <div className=" text-slate-100 p-6 sm:p-12 space-y-8">
+
       <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 text-slate-100">
         
         {/* Header & Search Bar */}

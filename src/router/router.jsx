@@ -15,6 +15,9 @@ import SinglePostView from '../component/Singlepost';
 import PublishedPostsPage from '../component/PublishPostList';
 import ProfilePage from '../UserAcces/UserProfile';
 import ListUser from '../Admin/UserList';
+import MiddleboardLayout from '../component/Middleboard';
+import Management from '../Admin/Managementpage';
+import PostList from '../Admin/PostsList';
 
 
 const routes = [
@@ -23,7 +26,23 @@ const routes = [
     element: <Main />,
     errorElement: <ErrorPage />,
     children: [
+      {element :<MiddleboardLayout/>,
+        children:[
       { index: true, element: <Home /> },
+      { path: 'dashboard' ,element:<Dashboard/> },
+      { path:'posts',element:< PublishedPostsPage /> },
+      {path: 'posts/:id', element:<SinglePostView/>},
+      {path: 'UserProfile',element:<ProfilePage/>},
+      {path:'management',
+        element:<Management/>,
+        children:[
+          {path:'/management',element:<ListUser/>},
+          {path:'/management/posts',element:<PostList/>}
+          
+        ]
+
+      }]
+      },
       {
         path: 'shop',
         element: <Shop />,
@@ -38,11 +57,10 @@ const routes = [
       { path: 'cart', element: <Cart /> },
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
-      { path: 'dashboard' ,element:<Dashboard/> },
-      { path:'posts',element:< PublishedPostsPage /> },
-      {path: 'posts/:id', element:<SinglePostView/>},
-      {path: 'UserProfile',element:<ProfilePage/>},
-      {path:'Listuser',element:<ListUser/>}
+
+
+      
+      
     ],
   },
 ];

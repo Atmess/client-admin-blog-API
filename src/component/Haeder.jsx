@@ -41,9 +41,9 @@ export default function Header() {
               Post
             </button>
           </Link>
-          <Link to="/Listuser">
+          <Link to="/management">
             <button className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-500 transition text-sm font-medium">
-              User
+              Admin
             </button>
           </Link>
           <Link to="/shop">

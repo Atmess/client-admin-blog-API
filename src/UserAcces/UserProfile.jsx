@@ -233,11 +233,11 @@ const handleDownload = async (fileId, fileName) => {
   };
 
   if (!user) {
-    return <div className="w-full md:w-[70%] text-center py-20 text-slate-400">Please log in to view your profile.</div>;
+    return <div >Please log in to view your profile.</div>;
   }
 
   return (
-    <div className="min-h-screen md:w-[50%] bg-slate-500 text-slate-100 p-6 sm:p-12 space-y-8">
+    <div className=" text-slate-100 p-6 sm:p-12 space-y-8">
       
       {/* Profile Section Box */}
       <div className="max-w-xl mx-auto bg-slate-800/60 border border-slate-700/80 rounded-2xl p-8 shadow-xl space-y-6">
