@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import Threedotmenu from './Threedotmenu';
 // import PostCard from './PostCard'; // Import your postcard component
 
 export default function PublishedPostsPage() {
@@ -8,7 +9,6 @@ export default function PublishedPostsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const token = localStorage.getItem('token');
-  const [activeDropdownId, setActiveDropdownId] = useState(null);
   const [visibleCount, setVisibleCount] = useState(6); // Starts showing 6 posts
   const handleLoadMore = () => {
     setVisibleCount((prevCount) => prevCount + 6);
@@ -16,9 +16,11 @@ export default function PublishedPostsPage() {
 
 
     const handleStatusChange = async (userId, newStatus) => {
+      
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8080/api/admin/users/${userId}/userstatus`, {
+      
+      const response = await fetch(`http://localhost:8080/api/admin/post/${userId}/poststatus` , {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -26,16 +28,13 @@ export default function PublishedPostsPage() {
         },
         body: JSON.stringify({ status: newStatus }),
       });
-
+      console.log(response)
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || 'Failed to update user status');
+        throw new Error(errData.message || 'Failed to update Post status');
       }
-
       // Update state locally so the UI updates instantly without refetching
-      setUsers((prevUsers) =>
-        prevUsers.map((u) => (u.id === userId ? { ...u, status: newStatus } : u))
-      );
+      setPosts((prev) => prev.filter((p) => p.id !== userId));
     } catch (err) {
       alert(err.message);
     }
@@ -169,55 +168,13 @@ export default function PublishedPostsPage() {
           className="text-sm font-semibold text-blue-400 hover:text-blue-300 inline-flex items-center gap-1"
         >
           Read full article &rarr;
-        </Link>                 <div className="flex justify-end items-center pt-3 mt-3 border-t border-slate-700/40">
-                  <div className="relative">
-                    {/* Clickable 3-Dot Button */}
-                    <button 
-                      onClick={() => setActiveDropdownId(activeDropdownId === post.id ? null : post.id)}
-                      className="p-2 text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl transition cursor-pointer flex items-center justify-center focus:outline-none"
-                      title="More options"
-                    >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                      </svg>
-                    </button>
-
-                   {/* 👈 DROPUP MENU CONTAINER */}
-                    {activeDropdownId === post.id && (
-                      <div className="absolute right-0 bottom-full mb-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
-                        
-
-
-                        <button
-                          onClick={() => {
-                            handleStatusChange(post.id,'FLAGGED')
-                          }}
-                          className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-slate-200 hover:bg-slate-700/60 rounded-lg transition font-medium"
-                        >
-                          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Flag post 
-                        </button>
-
-                        <div className="border-t border-slate-700/60 my-1"></div>
-
-                        <button
-                          onClick={() => {
-                            handleDeletePost(post.id)
-                          }}
-                          className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition font-medium"
-                        >
-                          <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          Remove
-                        </button>
-
-                      </div>
-                    )}
-                  </div>
-                </div> 
+        </Link>          
+          <Threedotmenu 
+          post={post}
+          handleDeletePost={()=>{handleDeletePost(post.id)}}
+          handleStatusChange={()=>{handleStatusChange(post.id,"FLAGGED")}}
+          nameForThis={"Flagged Post"}
+          />
                  </div>
       </article>
     ))}
