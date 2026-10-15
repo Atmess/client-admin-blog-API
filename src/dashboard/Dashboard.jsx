@@ -107,19 +107,11 @@ export default function Dashboard() {
     }
   };
 
-  // 3. PUBLISH DRAFT OR UPDATE DRAFT
+  // 3. PUBLISH DRAFT
   const handlePublishDraft = async (postId) => {
-
-    const isEditing = Boolean(editingPost);
-    const url = isEditing
-      ? `http://localhost:8080/api/post/${editingPost.id}`
-      : 'http://localhost:8080/api/post/${postId}/publishdraft';
-
-    const method = isEditing ? 'PUT' : 'PATCH';
-
     try {
-      const response = await fetch(url, {
-        method: method,
+      const response = await fetch(`http://localhost:8080/api/post/${postId}/publishdraft`, {
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
         },

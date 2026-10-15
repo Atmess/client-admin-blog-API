@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Threedotmenu from './Threedotmenu';
+import Threedotmenu from '../component/Threedotmenu';
 // import PostCard from './PostCard'; // Import your postcard component
 
 export default function PublishedPostsPage() {

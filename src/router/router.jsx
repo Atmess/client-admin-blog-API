@@ -11,13 +11,13 @@ import MyDeck from '../component/MyDeck';
 import Login from '../UserAcces/Login';
 import Register from '../UserAcces/Register';
 import Dashboard from '../dashboard/Dashboard';
-import SinglePostView from '../component/Singlepost';
-import PublishedPostsPage from '../component/PublishPostList';
 import ProfilePage from '../UserAcces/UserProfile';
 import ListUser from '../Admin/UserList';
 import MiddleboardLayout from '../component/Middleboard';
 import Management from '../Admin/Managementpage';
 import PostList from '../Admin/PostsList';
+import SinglePostView from '../posts/Singlepost';
+import PublishedPostsPage from '../posts/PublishPostList';
 
 
 const routes = [
@@ -31,7 +31,7 @@ const routes = [
       { index: true, element: <Home /> },
       { path: 'dashboard' ,element:<Dashboard/> },
       { path:'posts',element:< PublishedPostsPage /> },
-      {path: 'posts/:id', element:<SinglePostView/>},
+      {path: 'posts/:id', element:<SinglePostView/>  },
       {path: 'UserProfile',element:<ProfilePage/>},
       {path:'management',
         element:<Management/>,
