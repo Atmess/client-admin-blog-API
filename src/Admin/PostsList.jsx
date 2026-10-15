@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logo from '../assets/picture/image1.png'
 
 
 export default function PostList() {
@@ -6,16 +7,12 @@ export default function PostList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const token = localStorage.getItem('token');
+  const [postFilter, setPostFilter] = useState('ALL'); // 'ALL' | 'PUBLISHED' | 'DRAFTS' | 'FLAGGED'
   
+  const token = localStorage.getItem('token');
 
-    // 1. FETCH POSTS DEPENDING ON ACTIVE TAB
-
-  // 👈 New state to track the active status filter tab ('ALL', 'ACTIVE', 'FLAGGED', 'BANNED')
-  const [postFilter, setPostFilter] = useState('ALL'); // 'ALL' | 'PUBLISHED' | 'FLAGGED' | 'DRAFTS'
-
-  // Fetch all users on mount
-  const fetchUsers = async () => {
+  // Fetch all posts on mount
+  const fetchPosts = async () => {
     setLoading(true);
     setError('');
     try {
@@ -25,10 +22,10 @@ export default function PostList() {
         },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch user list. Are you an admin?');
+      if (!response.ok) throw new Error('Failed to fetch posts list. Are you an admin?');
 
       const data = await response.json();
-      setUsers(data);
+      setPosts(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -37,80 +34,106 @@ export default function PostList() {
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchPosts();
   }, []);
 
-  // Handle status update (BAN, FLAG, ACTIVE)
-  const handleStatusChange = async (PostId, newStatus) => {
+  // Handle post status update (e.g. flagging or unpublishing)
+  const handleStatusChange = async (postId, newStatus) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8080/api/admin/users/${PostId}/userstatus`, {
+      const response = await fetch(`http://localhost:8080/api/admin/posts/${postId}/poststatus`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ 
+          status: newStatus, 
+        }),
       });
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || 'Failed to update user status');
+        throw new Error(errData.message || 'Failed to update post status');
       }
 
-      // Update state locally so the UI updates instantly without refetching
-      setPosts((prevUsers) =>
-        prevUsers.map((u) => (u.id === PostId ? { ...u, status: newStatus } : u))
+      const result = await response.json();
+
+      // Update state locally
+      setPosts((prevPosts) =>
+        prevPosts.map((p) => (p.id === postId ? { ...p, ...result.post } : p))
       );
     } catch (err) {
       alert(err.message);
     }
   };
 
+  // Handle delete post
+  const handleDeletePost = async (postId) => {
+    if (!confirm('Are you sure you want to permanently remove this post?')) return;
 
-  // Filter the full list right inside the component
-const filteredPosts = posts.filter((p) => {
-  if (postFilter === 'PUBLISHED') return p.published === true && p.status !== 'FLAGGED';
-  if (postFilter === 'FLAGGED') return p.status === 'FLAGGED';
-  if (postFilter === 'DRAFTS') return p.published === false;
-  return true; // 'ALL' shows everything
-});
+    try {
+      const response = await fetch(`http://localhost:8080/api/admin/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
+      if (!response.ok) throw new Error('Failed to delete post');
+
+      setPosts((prevPosts) => prevPosts.filter((p) => p.id !== postId));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Filter posts based on search query AND active status filter tab
+  const filteredPosts = posts.filter((p) => {
+    const matchesSearch =
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.author?.username && p.author.username.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    let matchesFilter = true;
+    if (postFilter === 'PUBLISHED') matchesFilter = p.published === true && p.status !== 'FLAGGED';
+    if (postFilter === 'DRAFTS') matchesFilter = p.published === false;
+    if (postFilter === 'FLAGGED') matchesFilter = p.status === 'FLAGGED';
+
+    return matchesSearch && matchesFilter;
+  });
 
   return (
-    <div className=" text-slate-100 p-6 sm:p-12 space-y-8">
-
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 text-slate-100">
+    <div className="text-slate-100 p-6 sm:p-12 space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Header & Search Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">User Management</h1>
-            <p className="text-sm text-slate-400 mt-1">View, search, and manage platform user statuses.</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-white">Post Management</h1>
+            <p className="text-sm text-slate-400 mt-1">Review, flag, unpublish, or remove platform posts.</p>
           </div>
 
           <input
             type="text"
-            placeholder="Search by username or email..."
+            placeholder="Search by title or author..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="bg-white border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-black focus:outline-none focus:border-blue-500 w-full sm:w-80"
           />
         </div>
 
-        {/* 👈 Status Filter Buttons (All, Active, Flagged, Banned) */}
+        {/* Status Filter Tabs */}
         <div className="flex flex-wrap gap-2 pt-2">
-          {['ALL','PUBLISHED', 'DRAFTS', 'FLAGGED'].map((status) => (
+          {['ALL', 'PUBLISHED', 'DRAFTS', 'FLAGGED'].map((tab) => (
             <button
-              key={status}
-              onClick={() => setPostFilter(status)}
+              key={tab}
+              onClick={() => setPostFilter(tab)}
               className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                statusFilter === status
+                postFilter === tab
                   ? 'bg-blue-600 text-white shadow-lg'
                   : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700'
               }`}
             >
-              {status}
+              {tab}
             </button>
           ))}
         </div>
@@ -128,50 +151,79 @@ const filteredPosts = posts.filter((p) => {
           </div>
         ) : filteredPosts.length === 0 ? (
           <div className="text-center py-16 bg-slate-800/40 rounded-xl border border-slate-700">
-            <p className="text-slate-400 text-lg">No users found matching your filters.</p>
+            <p className="text-slate-400 text-lg">No posts found matching your filters.</p>
           </div>
         ) : (
-          <div className="bg-slate-800/60 border border-slate-700/80 rounded-2xl shadow-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-700 bg-slate-900/50 text-xs uppercase tracking-wider text-slate-400">
-                    <th className="p-4">User</th>
-                    <th className="p-4">Role</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-700/50 text-sm">
-                  {filteredPosts.map((post) => ( <div
+          <div className="grid gap-4">
+            {filteredPosts.map((post) => (
+              <div
                 key={post.id}
-                className="bg-slate-800/80 p-5 rounded-xl border border-slate-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                className="bg-slate-800/80 border border-slate-700 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
               >
-                {/* Left Section: Text Content & Optional Image Thumbnail */}
-                <div className="flex items-start gap-4 max-w-2xl">
-                  {post.files && post.files.length > 0 && (
-                    <div className="shrink-0 flex gap-2">
-                      
-                        <img 
-                          src={post.files[0].url} 
-                          alt={post.files.name} 
-                          className="h-20 w-20 rounded-lg object-cover border border-slate-700" 
-                        />
-                      
+                {/* Left: Thumbnail & Post Details */}
+                <div className="flex items-start gap-4 flex-1">
+                  {post.files && post.files.length > 0 ? (
+                              
+                    <img 
+                                  src={post.files[0].url } 
+                                  alt={post.files[0].name || post.title} 
+                                  className="h-20 w-20 rounded-xl object-cover border border-slate-700 shrink-0" 
+                                />
+                              
+                            ):( <img 
+                      src={logo} 
+                      alt={post.title} 
+                      className="h-20 w-20 rounded-xl object-cover border border-slate-700 shrink-0"  // Add your preferred styling for the logo placeholder
+                    />) }
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-lg font-semibold text-white">{post.title}</h2>
+                      <span className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
+                        post.status === 'FLAGGED'
+                          ? 'bg-amber-900/40 border border-amber-500/50 text-amber-300'
+                          : post.published
+                          ? 'bg-emerald-900/40 border border-emerald-500/50 text-emerald-300'
+                          : 'bg-slate-700/40 text-slate-300'
+                      }`}>
+                        {post.status === 'FLAGGED' ? 'FLAGGED' : post.published ? 'PUBLISHED' : 'DRAFT'}
+                      </span>
                     </div>
+                    <p className="text-sm text-slate-400 line-clamp-2">{post.content}</p>
+                    <div className="text-xs text-slate-500 flex items-center gap-4 pt-1">
+                      <span>By @{post.author?.username || 'Unknown'}</span>
+                      <span>•</span>
+                      <span>Updated: {new Date(post.updatedAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Admin Action Buttons */}
+                <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                  {post.status !== 'FLAGGED' ? (
+                    <button
+                      onClick={() => handleStatusChange(post.id, 'FLAGGED')}
+                      className="px-3.5 py-2 bg-amber-600/80 hover:bg-amber-500 text-white rounded-xl text-xs font-medium transition cursor-pointer"
+                    >
+                      Flag & Unpublish
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleStatusChange(post.id, 'GOOD')}
+                      className="px-3.5 py-2 bg-emerald-600/80 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition cursor-pointer"
+                    >
+                      Approve
+                    </button>
                   )}
 
-                  <div className="space-y-1">
-                    <h2 className="text-xl font-semibold text-white">{post.title}</h2>
-                    <p className="text-sm text-slate-400 line-clamp-2">{post.content}</p>
-                    <p className="text-xs text-slate-500">
-                      Last updated: {new Date(post.updatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div></div>))}
-                </tbody>
-              </table>
-            </div>
+                  <button
+                    onClick={() => handleDeletePost(post.id)}
+                    className="px-3.5 py-2 bg-red-600/80 hover:bg-red-500 text-white rounded-xl text-xs font-medium transition cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

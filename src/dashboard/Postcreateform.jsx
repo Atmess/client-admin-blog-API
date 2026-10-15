@@ -63,6 +63,21 @@ export default function PostCreateform({setFormData,handleSubmit,formData,closeM
                     </label>
                   </div>
                 )}
+
+                {editingPost && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="published"
+                      checked={formData.published}
+                      onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                      className="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700"
+                    />
+                    <label htmlFor="published" className="text-sm text-slate-300">
+                      Published Status 
+                    </label>
+                  </div>
+                )}
                 
                 <div className="flex justify-end gap-3 pt-2">
                   <button

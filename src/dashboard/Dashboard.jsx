@@ -107,17 +107,26 @@ export default function Dashboard() {
     }
   };
 
-  // 3. PUBLISH DRAFT
+  // 3. PUBLISH DRAFT OR UPDATE DRAFT
   const handlePublishDraft = async (postId) => {
+
+    const isEditing = Boolean(editingPost);
+    const url = isEditing
+      ? `http://localhost:8080/api/post/${editingPost.id}`
+      : 'http://localhost:8080/api/post/${postId}/publishdraft';
+
+    const method = isEditing ? 'PUT' : 'PATCH';
+
     try {
-      const response = await fetch(`http://localhost:8080/api/post/${postId}/publishdraft`, {
-        method: 'PATCH',
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-
-      if (!response.ok) throw new Error('Failed to publish draft');
+      const data = await response.json()
+      console.log(data)
+      if (!response.ok) throw new Error( data.message||'Failed to publish draft ' );
       fetchPosts();
     } catch (err) {
       alert(err.message);
@@ -223,7 +232,7 @@ export default function Dashboard() {
           <ActiveTabButton
           currentTab={activeTab}
           setActiveTab={setActiveTab}
-          nameforthisone={'draft'}
+          nameforthisone={'drafts'}
           nameForthis={"My Draft"}
           />
           <ActiveTabButton
